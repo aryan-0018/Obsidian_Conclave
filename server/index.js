@@ -26,6 +26,10 @@ app.use(cors(corsOption));
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
+app.get('/', (req,res)=>{
+    res.send('Obsidian Conclave Server is running')
+})
+
 app.get('/api/health', (req,res) => {
     res.json({
         status: 'OK',
