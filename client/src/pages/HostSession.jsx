@@ -166,7 +166,11 @@ const HostSession = () => {
   }
 
   if (!sessionInfo) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-obsidian-bg text-white">
+        Loading session...
+      </div>
+    )
   }
 
   return (
@@ -176,7 +180,7 @@ const HostSession = () => {
         roomId={roomId}
         userName={user?.name}
         onBack={handleBack}
-        showEndBUtton={sessionInfo.isHost}
+        showEndBUtton={sessionInfo?.isHost}
         onEndSession={handleEndSession}
       />
 
@@ -186,9 +190,10 @@ const HostSession = () => {
             <SessionInfoCard
               roomId={roomId}
               shareableLink={getShareableLink()}
-              status={sessionInfo.status}
-              participantCount={sessionInfo.participantCount}
-              copied={copied}
+              status={sessionInfo?.status}
+              participantCount={sessionInfo?.participantCount}
+              roomCopied={roomCopied}
+              linkCopied={linkCopied}
               onCopyRoomId={handleCopyRoomId}
               onCopyLink={handleCopyLink}
             />
