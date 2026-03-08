@@ -12,6 +12,11 @@ const sessionSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    meetingType: {
+        type: String,
+        enum: ['public', 'private'],
+        default: 'public'
+    },
     status: {
         type: String,
         enum: ['active', 'ended'],
@@ -26,9 +31,23 @@ const sessionSchema = new mongoose.Schema({
         userName: {
             type: String,
             required: true
-
         },
         joinedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    pendingParticipants: [{
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        userName: {
+            type: String,
+            required: true
+        },
+        requestedAt: {
             type: Date,
             default: Date.now
         }

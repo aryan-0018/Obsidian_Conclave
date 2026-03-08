@@ -1,7 +1,17 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator'
-import { getSession, createSession, leaveSession, endSession, JoinSession, listSession } from '../controllers/sessionControllers.js';
-import { generateLivekitToken } from '../controllers/livekitController.js';
+import {
+    getSession,
+    createSession,
+    leaveSession,
+    endSession,
+    JoinSession,
+    listSession,
+    admitParticipant,
+    denyParticipant,
+    removeParticipant,
+} from '../controllers/sessionControllers.js';
+import { generateLivekitToken, muteParticipant, stopScreenShare } from '../controllers/livekitController.js';
 import { protect } from '../middleware/auth.js';
 
 
@@ -67,6 +77,31 @@ router.post(
 
 //POST /api/session/livekit-token
 router.post('/livekit-token', generateLivekitToken)
+
+
+// ========================================
+// Waiting Room Routes (Host only)
+// ========================================
+
+//POST /api/session/admit
+router.post('/admit', admitParticipant)
+
+//POST /api/session/deny
+router.post('/deny', denyParticipant)
+
+
+// ========================================
+// Host Control Routes
+// ========================================
+
+//POST /api/session/remove
+router.post('/remove', removeParticipant)
+
+//POST /api/session/mute
+router.post('/mute', muteParticipant)
+
+//POST /api/session/stop-screenshare
+router.post('/stop-screenshare', stopScreenShare)
 
 
 //GET /api/session/:roomId (dynamic route must be last)

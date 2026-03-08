@@ -1,8 +1,8 @@
 import React from "react";
-import { FaPlus, FaSpinner, FaUsers } from "react-icons/fa";
+import { FaPlus, FaSpinner, FaUsers, FaGlobe, FaLock } from "react-icons/fa";
 import { APP_CONFIG } from "../../utils/constants";
 
-const ActionCard = ({ onCreateSession, onJoinSession, creating }) => {
+const ActionCard = ({ onCreateSession, onJoinSession, creating, meetingType, onMeetingTypeChange }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
       <div className="bg-obsidian-card rounded-2xl shadow-lg p-8 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)] transition-all transform hover:-translate-y-1 border border-obsidian-border hover:border-obsidian-gold/30">
@@ -12,9 +12,43 @@ const ActionCard = ({ onCreateSession, onJoinSession, creating }) => {
         <h3 className="text-2xl font-bold text-obsidian-text mb-3 text-center">
           {APP_CONFIG.DASHBOARD_CONTENT.ACTION_CARDS.HOST.TITLE}
         </h3>
-        <p className="text-obsidian-muted mb-6 text-center">
+        <p className="text-obsidian-muted mb-5 text-center">
           {APP_CONFIG.DASHBOARD_CONTENT.ACTION_CARDS.HOST.DESCRIPTION}
         </p>
+
+        {/* Meeting Type Selector */}
+        <div className="mb-5">
+          <div className="flex rounded-lg border border-obsidian-border overflow-hidden">
+            <button
+              type="button"
+              onClick={() => onMeetingTypeChange?.('public')}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-bold transition-all ${meetingType !== 'private'
+                  ? 'bg-obsidian-gold text-obsidian-bg'
+                  : 'bg-obsidian-secondary text-obsidian-muted hover:text-obsidian-text'
+                }`}
+            >
+              <FaGlobe className="w-3.5 h-3.5" />
+              {APP_CONFIG.SESSION_CONTENT.MEETING_TYPE.PUBLIC_LABEL}
+            </button>
+            <button
+              type="button"
+              onClick={() => onMeetingTypeChange?.('private')}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-bold transition-all ${meetingType === 'private'
+                  ? 'bg-obsidian-gold text-obsidian-bg'
+                  : 'bg-obsidian-secondary text-obsidian-muted hover:text-obsidian-text'
+                }`}
+            >
+              <FaLock className="w-3.5 h-3.5" />
+              {APP_CONFIG.SESSION_CONTENT.MEETING_TYPE.PRIVATE_LABEL}
+            </button>
+          </div>
+          <p className="text-xs text-obsidian-muted mt-2 text-center">
+            {meetingType === 'private'
+              ? APP_CONFIG.SESSION_CONTENT.MEETING_TYPE.PRIVATE_DESC
+              : APP_CONFIG.SESSION_CONTENT.MEETING_TYPE.PUBLIC_DESC
+            }
+          </p>
+        </div>
 
         <button
           onClick={onCreateSession}

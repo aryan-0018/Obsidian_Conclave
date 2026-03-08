@@ -19,8 +19,12 @@ export const API_ENDPOINTS = {
     GET: '/session', // Base path, append roomId
     LIST: '/session/list',
     LIVEKIT_TOKEN: '/session/livekit-token',
+    ADMIT: '/session/admit',
+    DENY: '/session/deny',
+    REMOVE: '/session/remove',
+    MUTE: '/session/mute',
+    STOP_SCREENSHARE: '/session/stop-screenshare',
   },
-  // LiveKit token generation endpoint on the backend
 };
 
 export const ROUTES = {
@@ -212,6 +216,10 @@ export const APP_CONFIG = {
       CONNECTING: 'Connecting to video room...',
       LEAVE_BUTTON: 'Leave Session',
       END_BUTTON: 'End Session',
+      START_RECORDING: 'Record',
+      STOP_RECORDING: 'Stop Recording',
+      RECORDING: 'Recording...',
+      TIMER_LABEL: 'Elapsed',
     },
     PARTICIPANTS: {
       HEADING: 'Participants',
@@ -219,6 +227,30 @@ export const APP_CONFIG = {
       PARTICIPANT_LABEL: 'Participant',
       JOINED_USERS_LABEL: 'Joined Users',
       EMPTY_MESSAGE: 'Participants will appear here as they join',
+    },
+    WAITING_ROOM: {
+      HEADING: 'Waiting to be Admitted',
+      DESCRIPTION: 'The host will let you in shortly. Please wait...',
+      DENIED_MESSAGE: 'Your request to join was denied by the host.',
+      SESSION_ENDED_MESSAGE: 'The session has ended.',
+    },
+    PENDING: {
+      HEADING: 'Waiting Room',
+      EMPTY_MESSAGE: 'No one is waiting',
+      ADMIT_BUTTON: 'Admit',
+      DENY_BUTTON: 'Deny',
+    },
+    HOST_CONTROLS: {
+      MUTE: 'Mute',
+      UNMUTE: 'Unmute',
+      REMOVE: 'Remove',
+      STOP_SCREENSHARE: 'Stop Share',
+    },
+    MEETING_TYPE: {
+      PUBLIC_LABEL: 'Public',
+      PUBLIC_DESC: 'Anyone with the room ID can join directly',
+      PRIVATE_LABEL: 'Private',
+      PRIVATE_DESC: 'Participants must be admitted by the host',
     },
   },
 

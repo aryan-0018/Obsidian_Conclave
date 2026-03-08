@@ -11,36 +11,36 @@ import sessionRoute from './routes/sessionRoute.js'
 dotenv.config();
 
 
-const app =express();
+const app = express();
 const PORT = process.env.PORT;
 
 
 const corsOption = {
     origin: process.env.CLIENT_URL,
-    credentials:true
+    credentials: true
 }
 
 connectDb();
 
 app.use(cors(corsOption));
 app.use(express.json())
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({ extended: true }))
 
-app.get('/', (req,res)=>{
+app.get('/', (req, res) => {
     res.send('Obsidian Conclave Server is running')
 })
 
-app.get('/api/health', (req,res) => {
+app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
-        message:'Live class server is running',
-        timestamp:new Date().toISOString()
+        message: 'Live class server is running',
+        timestamp: new Date().toISOString()
     })
 })
- 
+
 //Api routes
-app.use('/api/auth',authRoute)
-app.use('/api/session',sessionRoute)
+app.use('/api/auth', authRoute)
+app.use('/api/session', sessionRoute)
 
 app.use(errorHandler)
 

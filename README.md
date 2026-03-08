@@ -1,19 +1,24 @@
-# Obsidian Conclave – Private Sessions
+## Obsidian Conclave – Private Sessions
 
 A production-ready, highly secured, encrypted digital congregation platform tailored for the elite.
 
-**MERN Stack | Tailwind CSS | LiveKit WebRTC** <br>
-License: MIT
+![MERN Stack](https://img.shields.io/badge/MERN-Stack-blue?logo=react)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 
 ## Application Access
-- **Live Application**: [Coming Soon](#)
-- **Backend API**: [Coming Soon](#)
+
+**Live Application :**  https://obsidian-conclave.vercel.app
+
+**Backend API** :  https://obsidian-conclave-backend.onrender.com
+
 
 Obsidian Conclave enables exclusive real-time video communication, granular host controls, encrypted credential management, and flawless secure global connection mapping through a modern and scalable MERN + LiveKit architecture.
 
----
 
 ## ✨ Key Features
+
 - **Elite Video Conferencing**: Robust, low-latency, real-time global video sessions powered by the modern LiveKit Cloud WebRTC engine.
 - **Secure Authentication**: Encrypted credential management, protected routing, and secure JWT-based session persistence.
 - **Granular Session Control**: Host-guarded rooms ensuring a secure environment where participants are forcefully disconnected globally the exact millisecond a host terminates the session.
@@ -21,7 +26,6 @@ Obsidian Conclave enables exclusive real-time video communication, granular host
 - **Modern UI/UX**: Built with React, Vite, and bespoke Tailwind CSS styling strictly enforcing a luxurious, unified "Royale Gold on Obsidian" aesthetic. 
 - **Responsive Architecture**: Fully modular React component structure with real-time reactive state management.
 
----
 
 ## 🛠️ Tech Stack
 
@@ -39,8 +43,7 @@ Obsidian Conclave enables exclusive real-time video communication, granular host
 - **Authentication**: Custom JWT Implementation, bcryptjs
 - **LiveKit Orchestration**: LiveKit Server SDK (`livekit-server-sdk`) 
 - **Validation**: express-validator
-
----
+  
 
 ## 🚀 Getting Started
 
@@ -69,7 +72,6 @@ Obsidian Conclave enables exclusive real-time video communication, granular host
    npm install
    ```
 
----
 
 ## ⚙️ Environment Variables
 
@@ -90,9 +92,9 @@ LIVEKIT_URL=your_livekit_wss_url
 **Frontend (`client/.env`):**
 ```env
 VITE_API_URL=http://localhost:5000/api
+VITE_LIVEKIT_URL=your_livekit_url
 ```
 
----
 
 ## 🏃‍♂️ Running the Application
 
@@ -109,9 +111,9 @@ VITE_API_URL=http://localhost:5000/api
    npm run dev
    ```
 
-The application will be available locally at `http://localhost:5173/`.
+The application will be available locally.
 
----
 
 ## 📄 License
+
 This project is licensed under the MIT License.

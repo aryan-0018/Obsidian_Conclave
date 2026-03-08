@@ -1,7 +1,7 @@
 import React from "react";
 import { APP_CONFIG } from "../../utils/constants";
 import { FaCircle, FaExternalLinkAlt, FaSpinner } from "react-icons/fa";
-import { formatDate } from "../../utils/helpers";
+import { formatDate, getDuration } from "../../utils/helpers";
 
 const SessionList = ({
   sessions,
@@ -92,7 +92,14 @@ const SessionList = ({
                 </div>
                 <div className="text-sm text-obsidian-muted/80 mt-2">
                   Started: {s.startedAt ? formatDate(s.startedAt) : "N/A"}
-                  {s.endedAt && <>. Ended: {formatDate(s.endedAt)}</>}
+                  {s.endedAt && (
+                    <div className="mt-1">
+                      Ended: {formatDate(s.endedAt)}
+                      <span className="ml-2 px-2 py-0.5 bg-obsidian-secondary border border-obsidian-border rounded text-xs font-mono text-obsidian-gold">
+                        Duration: {getDuration(s.startedAt, s.endedAt)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center space-x-2">

@@ -4,8 +4,6 @@ import { API_ENDPOINTS } from "../utils/constants";
 
 
 
-
-
 const SessionContext = createContext();
 
 
@@ -15,12 +13,12 @@ export const SessionProvider = ({ children }) => {
     const [error, setError] = useState(null);
 
 
-    //Create a new session 
-    const createSession = useCallback(async () => {
+    //Create a new session
+    const createSession = useCallback(async (meetingType = 'public') => {
         try {
             setError(null);
             setLoading(true);
-            const response = await api.post(API_ENDPOINTS.SESSION.CREATE);
+            const response = await api.post(API_ENDPOINTS.SESSION.CREATE, { meetingType });
             const session = response.data.data.session;
 
             setCurrentSession(session);
@@ -116,6 +114,66 @@ export const SessionProvider = ({ children }) => {
     }, [])
 
 
+    // ========================================
+    // Waiting Room: Admit / Deny
+    // ========================================
+
+    const admitParticipant = useCallback(async (roomId, pendingUserId) => {
+        try {
+            const response = await api.post(API_ENDPOINTS.SESSION.ADMIT, { roomId, pendingUserId });
+            return { success: true, data: response.data.data };
+        } catch (error) {
+            const errorMessage = error.response?.data?.error || 'Failed to admit participant';
+            return { success: false, error: errorMessage };
+        }
+    }, []);
+
+    const denyParticipant = useCallback(async (roomId, pendingUserId) => {
+        try {
+            const response = await api.post(API_ENDPOINTS.SESSION.DENY, { roomId, pendingUserId });
+            return { success: true, data: response.data.data };
+        } catch (error) {
+            const errorMessage = error.response?.data?.error || 'Failed to deny participant';
+            return { success: false, error: errorMessage };
+        }
+    }, []);
+
+
+    // ========================================
+    // Host Controls
+    // ========================================
+
+    const removeParticipant = useCallback(async (roomId, targetUserId) => {
+        try {
+            const response = await api.post(API_ENDPOINTS.SESSION.REMOVE, { roomId, targetUserId });
+            return { success: true, data: response.data.data };
+        } catch (error) {
+            const errorMessage = error.response?.data?.error || 'Failed to remove participant';
+            return { success: false, error: errorMessage };
+        }
+    }, []);
+
+    const muteParticipant = useCallback(async (roomId, participantIdentity, trackSid, muted = true) => {
+        try {
+            const response = await api.post(API_ENDPOINTS.SESSION.MUTE, { roomId, participantIdentity, trackSid, muted });
+            return { success: true, data: response.data.data };
+        } catch (error) {
+            const errorMessage = error.response?.data?.error || 'Failed to mute participant';
+            return { success: false, error: errorMessage };
+        }
+    }, []);
+
+    const stopScreenShare = useCallback(async (roomId, participantIdentity) => {
+        try {
+            const response = await api.post(API_ENDPOINTS.SESSION.STOP_SCREENSHARE, { roomId, participantIdentity });
+            return { success: true, data: response.data.data };
+        } catch (error) {
+            const errorMessage = error.response?.data?.error || 'Failed to stop screen share';
+            return { success: false, error: errorMessage };
+        }
+    }, []);
+
+
     const clearSession = useCallback(() => {
         setCurrentSession(null);
         setError(null);
@@ -131,7 +189,13 @@ export const SessionProvider = ({ children }) => {
         leaveSession,
         listSessions,
         clearSession,
-        setError
+        setError,
+        // New methods
+        admitParticipant,
+        denyParticipant,
+        removeParticipant,
+        muteParticipant,
+        stopScreenShare,
     }
 
     return (

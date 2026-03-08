@@ -16,10 +16,11 @@ const Dashboard = () => {
   const [creating, setCreating] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [meetingType, setMeetingType] = useState("public");
 
   const handleCreateSession = async () => {
     setCreating(true);
-    const result = await createSession();
+    const result = await createSession(meetingType);
     if (result.success) {
       navigate(`${ROUTES.HOST}?roomId=${result.session.roomId}`);
     }
@@ -69,6 +70,8 @@ const Dashboard = () => {
           onCreateSession={handleCreateSession}
           onJoinSession={handleJoinSession}
           creating={creating}
+          meetingType={meetingType}
+          onMeetingTypeChange={setMeetingType}
         />
 
         <FeaturesGrid />

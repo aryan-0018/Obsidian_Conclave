@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useSession } from '../context/sessionContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLiveKit } from '../hooks/useLiveKit';
@@ -9,6 +9,7 @@ import SessionHeader from '../components/session/SessionHeader';
 import JoinForm from '../components/session/JoinForm';
 import ParticipantsList from '../components/session/ParticipantsList';
 import LiveKitVideoRoom from '../components/session/LiveKitVideoRoom';
+import WaitingRoom from '../components/session/WaitingRoom';
 import toast from 'react-hot-toast';
 
 const JoinSession = () => {
@@ -17,6 +18,14 @@ const JoinSession = () => {
   const [sessionJoined, setSessionJoined] = useState(false);
   const [sessionInfo, setSessionInfo] = useState(null);
   const [searchParams] = useSearchParams();
+  const [joinStatus, setJoinStatus] = useState('none'); // 'none' | 'pending' | 'joined' | 'denied'
+  const joinStatusRef = useRef(joinStatus);
+  const [liveKitParticipants, setLiveKitParticipants] = useState(null);
+
+  // Keep ref in sync with state so interval callbacks always read the latest value
+  useEffect(() => {
+    joinStatusRef.current = joinStatus;
+  }, [joinStatus]);
 
   const { joinSession, getSession, loading, error } = useSession();
   const navigate = useNavigate();
@@ -60,56 +69,98 @@ const JoinSession = () => {
 
     if (result.success) {
       setSessionInfo(result.session)
-      setSessionJoined(true);
 
       if (result.session.isHost) {
         navigate(`${ROUTES.HOST}?roomId=${roomId}`)
         return;
       }
 
-      // Connect to LiveKit room
-      await connectToRoom(roomId);
+      const status = result.session.joinStatus || 'joined';
+      setJoinStatus(status);
+
+      if (status === 'joined') {
+        setSessionJoined(true);
+        // Connect to LiveKit room
+        await connectToRoom(roomId);
+      } else if (status === 'pending') {
+        // User is in waiting room — don't connect to LiveKit yet
+        setSessionJoined(false);
+      }
     }
   }
 
-  // Poll for participant updates
+  // Poll for status updates (participant list + waiting room admission)
   useEffect(() => {
-    if (!sessionJoined || !roomId) return;
+    if (joinStatus !== 'pending' && !sessionJoined) return;
+    if (!roomId) return;
+
     const interval = setInterval(async () => {
+      const currentStatus = joinStatusRef.current;
       const res = await getSession(roomId)
       if (res.success) {
         if (res.session.status === 'ended') {
           disconnectFromRoom();
-          toast.error("The host has ended the session");
-          navigate(ROUTES.DASHBOARD);
-        } else {
-          setSessionInfo(res.session);
+          if (currentStatus === 'pending') {
+            setJoinStatus('ended');
+          } else {
+            toast.error("The host has ended the session");
+            navigate(ROUTES.DASHBOARD);
+          }
+          return;
+        }
+
+        setSessionInfo(res.session);
+
+        // Check if user was admitted while pending
+        if (currentStatus === 'pending' && res.session.joinStatus === 'joined') {
+          setJoinStatus('joined');
+          setSessionJoined(true);
+          toast.success("You've been admitted to the session!");
+          // Now connect to LiveKit
+          await connectToRoom(roomId);
+        }
+
+        // Check if user was denied (no longer pending and not joined)
+        if (currentStatus === 'pending' && res.session.joinStatus === 'none') {
+          setJoinStatus('denied');
         }
       }
-    }, 5000)
+    }, 3000)
     return () => clearInterval(interval)
-  }, [sessionJoined, roomId, getSession, disconnectFromRoom, navigate])
+  }, [joinStatus, sessionJoined, roomId, getSession, disconnectFromRoom, navigate, connectToRoom])
 
   const handleLeave = async () => {
     disconnectFromRoom();
 
-    if (sessionJoined) {
+    if (sessionJoined || joinStatus === 'pending') {
       await api.post(API_ENDPOINTS.SESSION.LEAVE, { roomId });
     }
 
     navigate(ROUTES.DASHBOARD)
   }
 
+  // Show join form if not submitted yet
+  const showJoinForm = joinStatus === 'none' && !sessionJoined;
+  // Show waiting room if pending
+  const showWaitingRoom = joinStatus === 'pending';
+  // Show denied (but not if session ended — that's a separate state)
+  const showDenied = joinStatus === 'denied';
+  // Show session ended while waiting
+  const showSessionEnded = joinStatus === 'ended';
+  // Show video room if joined
+  const showVideoRoom = joinStatus === 'joined' && sessionJoined;
+
   return (
     <div className="min-h-screen bg-obsidian-bg">
       <SessionHeader
         title={APP_CONFIG.SESSION_CONTENT.HEADER.JOINING_TITLE}
-        roomId={sessionJoined ? roomId : ''}
+        roomId={showVideoRoom || showWaitingRoom ? roomId : ''}
         onBack={() => navigate(ROUTES.DASHBOARD)}
+        meetingType={sessionInfo?.meetingType}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {!sessionJoined ? (
+      <main className="mx-auto px-2 sm:px-6 lg:px-8 py-6 sm:py-12">
+        {showJoinForm && (
           <JoinForm
             roomId={roomId}
             error={error || localError}
@@ -117,9 +168,37 @@ const JoinSession = () => {
             onChange={handleChange}
             onSubmit={handleSubmit}
           />
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
+        )}
+
+        {showWaitingRoom && (
+          <WaitingRoom
+            roomId={roomId}
+            hostName={sessionInfo?.hostName}
+            onLeave={handleLeave}
+          />
+        )}
+
+        {showDenied && (
+          <WaitingRoom
+            roomId={roomId}
+            hostName={sessionInfo?.hostName}
+            onLeave={handleLeave}
+            denied={true}
+          />
+        )}
+
+        {showSessionEnded && (
+          <WaitingRoom
+            roomId={roomId}
+            hostName={sessionInfo?.hostName}
+            onLeave={handleLeave}
+            sessionEnded={true}
+          />
+        )}
+
+        {showVideoRoom && (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 h-full">
+            <div className="lg:col-span-3 space-y-6">
               <LiveKitVideoRoom
                 token={livekitToken}
                 serverUrl={livekitUrl}
@@ -130,6 +209,19 @@ const JoinSession = () => {
                 onDisconnected={onDisconnected}
                 onLeave={handleLeave}
                 leaveButtonText={APP_CONFIG.SESSION_CONTENT.VIDEO.LEAVE_BUTTON}
+                startedAt={sessionInfo?.startedAt}
+                participantCount={liveKitParticipants?.length ?? sessionInfo?.participantCount ?? 0}
+                participantsPanel={
+                  <div className="flex flex-col h-full bg-obsidian-bg rounded-lg overflow-hidden border border-obsidian-border/50">
+                    <ParticipantsList
+                      participants={sessionInfo?.participants}
+                      liveKitParticipants={liveKitParticipants}
+                      hostName={sessionInfo?.hostName}
+                      hostId={sessionInfo?.host}
+                    />
+                  </div>
+                }
+                onParticipantsUpdate={setLiveKitParticipants}
               />
             </div>
 
@@ -137,7 +229,9 @@ const JoinSession = () => {
               {sessionInfo && (
                 <ParticipantsList
                   participants={sessionInfo.participants}
+                  liveKitParticipants={liveKitParticipants}
                   hostName={sessionInfo.hostName}
+                  hostId={sessionInfo.host}
                 />
               )}
             </div>
