@@ -23,7 +23,7 @@ Obsidian Conclave enables exclusive real-time video communication, granular host
 - **Secure Authentication**: Encrypted credential management, protected routing, and secure JWT-based session persistence.
 - **Granular Session Control**: Host-guarded rooms ensuring a secure environment where participants are forcefully disconnected globally the exact millisecond a host terminates the session.
 - **Instant Gateway**: 1-click room creation, instantaneous secure sharable link generation, and 1-click joining.
-- **Modern UI/UX**: Built with React, Vite, and bespoke Tailwind CSS styling strictly enforcing a luxurious, unified "Royale Gold on Obsidian" aesthetic. 
+- **Modern UI/UX**: Built with React, Vite, and bespoke Tailwind CSS styling. 
 - **Responsive Architecture**: Fully modular React component structure with real-time reactive state management.
 
 
