@@ -40,7 +40,7 @@ Obsidian Conclave enables exclusive real-time video communication, granular host
 ### Backend (Server)
 - **Environment**: Node.js + Express
 - **Database**: MongoDB + Mongoose
-- **Authentication**: Custom JWT Implementation, bcryptjs
+- **Authentication**: JWT Implementation, bcryptjs
 - **LiveKit Orchestration**: LiveKit Server SDK (`livekit-server-sdk`) 
 - **Validation**: express-validator
   
