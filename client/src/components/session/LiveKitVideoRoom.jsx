@@ -75,8 +75,8 @@ const LiveKitVideoRoom = ({
 }) => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showParticipantsPanel, setShowParticipantsPanel] = useState(false);
-    const [streamResolution, setStreamResolution] = useState("1080p");
-    const [streamFramerate, setStreamFramerate] = useState("60");
+    const [streamResolution, setStreamResolution] = useState("720p");
+    const [streamFramerate, setStreamFramerate] = useState("15");
     const [showQualityModal, setShowQualityModal] = useState(false);
     const containerRef = useRef(null);
 
@@ -86,7 +86,7 @@ const LiveKitVideoRoom = ({
     );
 
     const activeResolutionObj = useMemo(
-        () => DISCORD_RESOLUTIONS.find((r) => r.id === streamResolution) || DISCORD_RESOLUTIONS[1],
+        () => DISCORD_RESOLUTIONS.find((r) => r.id === streamResolution) || DISCORD_RESOLUTIONS[0],
         [streamResolution]
     );
 
@@ -271,6 +271,9 @@ const LiveKitVideoRoom = ({
                         isFullscreen={isFullscreen}
                         toggleFullscreen={toggleFullscreen}
                         streamResolution={streamResolution}
+                        streamFramerate={streamFramerate}
+                        activeBitrate={activeBitrate}
+                        activeResolutionObj={activeResolutionObj}
                         onOpenQualityModal={() => setShowQualityModal(true)}
                         participantsPanel={participantsPanel}
                         participantCount={participantCount}
@@ -387,6 +390,9 @@ const DiscordVideoRoomInner = ({
     isFullscreen,
     toggleFullscreen,
     streamResolution,
+    streamFramerate,
+    activeBitrate,
+    activeResolutionObj,
     onOpenQualityModal,
     participantsPanel,
     participantCount,
@@ -550,6 +556,47 @@ const DiscordVideoRoomInner = ({
         };
     }, [room]);
 
+    // Live Quality Reconfiguration: Apply selected resolution, framerate, and bitrate to active tracks
+    useEffect(() => {
+        if (!localParticipant) return;
+        const updateActiveTracks = async () => {
+            const targetFps = Number(streamFramerate) || 15;
+            for (const pub of localParticipant.videoTrackPublications.values()) {
+                if (pub.track) {
+                    // 1. Live MediaStreamTrack constraints (camera / screen)
+                    if (pub.track.mediaStreamTrack && typeof pub.track.mediaStreamTrack.applyConstraints === "function") {
+                        try {
+                            await pub.track.mediaStreamTrack.applyConstraints({
+                                width: { ideal: activeResolutionObj.width },
+                                height: { ideal: activeResolutionObj.height },
+                                frameRate: { ideal: targetFps, max: targetFps },
+                            });
+                        } catch (e) {
+                            console.warn("Could not apply live constraints to track:", e);
+                        }
+                    }
+                    // 2. WebRTC sender bitrate & framerate parameters
+                    const sender = pub.track.sender;
+                    if (sender && typeof sender.getParameters === "function" && typeof sender.setParameters === "function") {
+                        try {
+                            const params = sender.getParameters();
+                            if (params && params.encodings && params.encodings.length > 0) {
+                                params.encodings.forEach((enc) => {
+                                    enc.maxBitrate = activeBitrate;
+                                    enc.maxFramerate = targetFps;
+                                });
+                                await sender.setParameters(params);
+                            }
+                        } catch (e) {
+                            console.warn("Could not set sender parameters:", e);
+                        }
+                    }
+                }
+            }
+        };
+        updateActiveTracks();
+    }, [localParticipant, streamResolution, streamFramerate, activeBitrate, activeResolutionObj]);
+
     // Discord Deafen Logic
     const toggleDeafen = useCallback(async () => {
         if (!room) return;
@@ -602,8 +649,28 @@ const DiscordVideoRoomInner = ({
 
     const toggleScreenShare = useCallback(async () => {
         if (!localParticipant) return;
-        await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
-    }, [localParticipant, isScreenShareEnabled]);
+        if (!isScreenShareEnabled) {
+            const captureOptions = {
+                resolution: {
+                    width: activeResolutionObj?.width || 1280,
+                    height: activeResolutionObj?.height || 720,
+                },
+                maxFrameRate: Number(streamFramerate) || 15,
+                audio: {
+                    autoGainControl: false,
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    channelCount: 2,
+                    sampleRate: 48000,
+                },
+                surfaceSwitching: "include",
+                systemAudio: "include",
+            };
+            await localParticipant.setScreenShareEnabled(true, captureOptions);
+        } else {
+            await localParticipant.setScreenShareEnabled(false);
+        }
+    }, [localParticipant, isScreenShareEnabled, activeResolutionObj, streamFramerate]);
 
     // Keyboard Shortcuts (M: Mute, D: Deafen)
     useEffect(() => {
@@ -961,7 +1028,7 @@ const DiscordVideoRoomInner = ({
                     title="Stream Quality Settings"
                 >
                     <FaBolt className="w-3.5 h-3.5 text-obsidian-gold" />
-                    <span className="hidden lg:inline text-[11px]">{streamResolution}</span>
+                    <span className="hidden sm:inline text-[11px]">{streamResolution} @ {streamFramerate}fps</span>
                 </button>
 
                 {/* 8. Fullscreen Toggle (From removed top menu) */}
