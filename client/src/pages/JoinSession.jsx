@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useSession } from '../context/sessionContext';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLiveKit } from '../hooks/useLiveKit';
 import { APP_CONFIG, ROUTES } from '../utils/constants';
@@ -13,6 +14,7 @@ import WaitingRoom from '../components/session/WaitingRoom';
 import toast from 'react-hot-toast';
 
 const JoinSession = () => {
+  const { user } = useAuth();
   const [roomId, setRoomId] = useState('')
   const [localError, setLocalError] = useState('')
   const [sessionJoined, setSessionJoined] = useState(false);
@@ -120,9 +122,17 @@ const JoinSession = () => {
           await connectToRoom(roomId);
         }
 
-        // Check if user was denied (no longer pending and not joined)
+        // Check if user was denied while pending
         if (currentStatus === 'pending' && res.session.joinStatus === 'none') {
           setJoinStatus('denied');
+        }
+
+        // Check if user was removed/kicked while in active session
+        if (currentStatus === 'joined' && res.session.joinStatus === 'none') {
+          disconnectFromRoom();
+          toast.error("You have been removed from the session by the host");
+          navigate(ROUTES.DASHBOARD);
+          return;
         }
       }
     }, 3000)
@@ -155,6 +165,7 @@ const JoinSession = () => {
       <SessionHeader
         title={APP_CONFIG.SESSION_CONTENT.HEADER.JOINING_TITLE}
         roomId={showVideoRoom || showWaitingRoom ? roomId : ''}
+        userName={user?.name}
         onBack={() => navigate(ROUTES.DASHBOARD)}
         meetingType={sessionInfo?.meetingType}
       />
@@ -218,6 +229,8 @@ const JoinSession = () => {
                       liveKitParticipants={liveKitParticipants}
                       hostName={sessionInfo?.hostName}
                       hostId={sessionInfo?.host}
+                      currentUserId={user?.id || user?._id}
+                      roomId={roomId}
                     />
                   </div>
                 }
@@ -228,10 +241,12 @@ const JoinSession = () => {
             <div className="lg:col-span-1">
               {sessionInfo && (
                 <ParticipantsList
-                  participants={sessionInfo.participants}
+                  participants={sessionInfo?.participants}
                   liveKitParticipants={liveKitParticipants}
-                  hostName={sessionInfo.hostName}
-                  hostId={sessionInfo.host}
+                  hostName={sessionInfo?.hostName}
+                  hostId={sessionInfo?.host}
+                  currentUserId={user?.id || user?._id}
+                  roomId={roomId}
                 />
               )}
             </div>

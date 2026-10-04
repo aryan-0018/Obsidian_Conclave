@@ -48,13 +48,28 @@ export const generateLivekitToken = async (req, res, next) => {
             });
         }
 
-        // Verify user is an admitted participant (not just pending)
-        const session = await Session.findOne({ roomId });
-        if (session && session.meetingType === 'private') {
-            const isParticipant = session.participants.some(
-                (p) => p.userId.toString() === userId.toString()
+        // Verify session status and admission
+        const session = await Session.findOne({ roomId }).lean();
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found. Please establish or join a valid session first.'
+            });
+        }
+
+        if (session.status === 'ended') {
+            return res.status(400).json({
+                success: false,
+                error: 'This session has already ended'
+            });
+        }
+
+        if (session.meetingType === 'private') {
+            const isHost = session.host?.toString() === userId.toString();
+            const isParticipant = (session.participants || []).some(
+                (p) => p.userId?.toString() === userId.toString()
             );
-            if (!isParticipant) {
+            if (!isHost && !isParticipant) {
                 return res.status(403).json({
                     success: false,
                     error: 'You have not been admitted to this private session yet'
@@ -132,7 +147,11 @@ export const muteParticipant = async (req, res, next) => {
             }
 
             for (const track of target.tracks) {
-                if (track.type === 1 || track.source === 1) { // AUDIO type or MICROPHONE source
+                // TrackType: AUDIO = 0. TrackSource: MICROPHONE = 2. Check both numeric and string representations.
+                const isAudioType = track.type === 0 || track.type === 'AUDIO' || String(track.type).toUpperCase() === 'AUDIO';
+                const isMicSource = track.source === 2 || track.source === 'MICROPHONE' || String(track.source).toUpperCase() === 'MICROPHONE';
+
+                if (isAudioType || isMicSource) {
                     await roomService.mutePublishedTrack(roomId, participantIdentity, track.sid, muted !== false);
                 }
             }
@@ -183,8 +202,14 @@ export const stopScreenShare = async (req, res, next) => {
 
         let stopped = false;
         for (const track of target.tracks) {
-            // Screen share source = 3 (SCREEN_SHARE) or 4 (SCREEN_SHARE_AUDIO)
-            if (track.source === 3 || track.source === 4) {
+            // Screen share source: SCREEN_SHARE = 3, SCREEN_SHARE_AUDIO = 4
+            const isScreenShare = track.source === 3 ||
+                track.source === 4 ||
+                track.source === 'SCREEN_SHARE' ||
+                track.source === 'SCREEN_SHARE_AUDIO' ||
+                String(track.source).toUpperCase().includes('SCREEN');
+
+            if (isScreenShare) {
                 await roomService.mutePublishedTrack(roomId, participantIdentity, track.sid, true);
                 stopped = true;
             }

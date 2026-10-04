@@ -24,10 +24,28 @@ export const generateRoomId = () => {
  */
 export const copyToClipboard = async (text) => {
   try {
-    await navigator.clipboard.writeText(text);
-    return true;
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (err) {
+    // Fallback to legacy execCommand if clipboard API is restricted
+  }
+
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand("copy");
+    document.body.removeChild(textArea);
+    return successful;
   } catch (error) {
-    console.error('Failed to copy:', error);
+    console.error("Failed to copy:", error);
     return false;
   }
 };

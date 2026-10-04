@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useSession } from "../context/sessionContext";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -80,6 +80,63 @@ const HostSession = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, getSession, navigate]);
+
+  // Host controls defined before polling effect
+  const handleAdmit = useCallback(async (targetRoomId, pendingUserId) => {
+    const activeRoomId = targetRoomId || roomId;
+    const result = await admitParticipant(activeRoomId, pendingUserId);
+    if (result.success) {
+      toast.success(result.data?.message || "Participant admitted");
+      const res = await getSession(activeRoomId);
+      if (res.success) setSessionInfo(res.session);
+    } else {
+      toast.error(result.error || "Failed to admit participant");
+    }
+  }, [admitParticipant, getSession, roomId]);
+
+  const handleDeny = useCallback(async (targetRoomId, pendingUserId) => {
+    const activeRoomId = targetRoomId || roomId;
+    const result = await denyParticipant(activeRoomId, pendingUserId);
+    if (result.success) {
+      toast.success(result.data?.message || "Participant denied");
+      const res = await getSession(activeRoomId);
+      if (res.success) setSessionInfo(res.session);
+    } else {
+      toast.error(result.error || "Failed to deny participant");
+    }
+  }, [denyParticipant, getSession, roomId]);
+
+  const handleMute = useCallback(async (targetRoomId, participantUserId) => {
+    const activeRoomId = targetRoomId || roomId;
+    const result = await muteParticipant(activeRoomId, participantUserId);
+    if (result.success) {
+      toast.success("Participant muted");
+    } else {
+      toast.error(result.error || "Failed to mute participant");
+    }
+  }, [muteParticipant, roomId]);
+
+  const handleRemove = useCallback(async (targetRoomId, targetUserId) => {
+    const activeRoomId = targetRoomId || roomId;
+    const result = await removeParticipant(activeRoomId, targetUserId);
+    if (result.success) {
+      toast.success(result.data?.message || "Participant removed");
+      const res = await getSession(activeRoomId);
+      if (res.success) setSessionInfo(res.session);
+    } else {
+      toast.error(result.error || "Failed to remove participant");
+    }
+  }, [removeParticipant, getSession, roomId]);
+
+  const handleStopScreenShare = useCallback(async (targetRoomId, participantUserId) => {
+    const activeRoomId = targetRoomId || roomId;
+    const result = await stopScreenShare(activeRoomId, participantUserId);
+    if (result.success) {
+      toast.success("Screen share stopped");
+    } else {
+      toast.error(result.error || "Failed to stop screen share");
+    }
+  }, [stopScreenShare, roomId]);
 
   // Poll participant list + pending list to keep it updated
   useEffect(() => {
@@ -184,12 +241,13 @@ const HostSession = () => {
 
   // Handle end session
   const handleEndSession = async () => {
-    if (!sessionInfo || !sessionInfo.isHost) return;
+    const sessionId = sessionInfo?.id || sessionInfo?._id;
+    if (!sessionInfo || !sessionInfo.isHost || !sessionId) return;
 
     try {
       disconnectFromRoom();
 
-      await api.post(`${API_ENDPOINTS.SESSION.END}/${sessionInfo.id}`);
+      await api.post(`${API_ENDPOINTS.SESSION.END}/${sessionId}`);
       clearSession();
       toast.success("Session ended successfully");
       navigate(ROUTES.DASHBOARD);
@@ -207,59 +265,6 @@ const HostSession = () => {
 
   const handleBack = () => {
     navigate(ROUTES.DASHBOARD);
-  };
-
-  // Host controls
-  const handleAdmit = async (roomId, pendingUserId) => {
-    const result = await admitParticipant(roomId, pendingUserId);
-    if (result.success) {
-      toast.success(result.data?.message || "Participant admitted");
-      // Refresh session
-      const res = await getSession(roomId);
-      if (res.success) setSessionInfo(res.session);
-    } else {
-      toast.error(result.error || "Failed to admit participant");
-    }
-  };
-
-  const handleDeny = async (roomId, pendingUserId) => {
-    const result = await denyParticipant(roomId, pendingUserId);
-    if (result.success) {
-      toast.success(result.data?.message || "Participant denied");
-      const res = await getSession(roomId);
-      if (res.success) setSessionInfo(res.session);
-    } else {
-      toast.error(result.error || "Failed to deny participant");
-    }
-  };
-
-  const handleMute = async (roomId, participantUserId) => {
-    const result = await muteParticipant(roomId, participantUserId);
-    if (result.success) {
-      toast.success("Participant muted");
-    } else {
-      toast.error(result.error || "Failed to mute participant");
-    }
-  };
-
-  const handleRemove = async (roomId, targetUserId) => {
-    const result = await removeParticipant(roomId, targetUserId);
-    if (result.success) {
-      toast.success(result.data?.message || "Participant removed");
-      const res = await getSession(roomId);
-      if (res.success) setSessionInfo(res.session);
-    } else {
-      toast.error(result.error || "Failed to remove participant");
-    }
-  };
-
-  const handleStopScreenShare = async (roomId, participantUserId) => {
-    const result = await stopScreenShare(roomId, participantUserId);
-    if (result.success) {
-      toast.success("Screen share stopped");
-    } else {
-      toast.error(result.error || "Failed to stop screen share");
-    }
   };
 
   if (loading) {
@@ -328,7 +333,7 @@ const HostSession = () => {
                     liveKitParticipants={liveKitParticipants}
                     hostId={sessionInfo?.host}
                     hostName={sessionInfo?.hostName}
-                    currentUserId={user?.id}
+                    currentUserId={user?.id || user?._id}
                     isHost={sessionInfo?.isHost}
                     roomId={roomId}
                     onRemove={handleRemove}
@@ -341,6 +346,7 @@ const HostSession = () => {
                         pendingParticipants={sessionInfo?.pendingParticipants}
                         onAdmit={handleAdmit}
                         onDeny={handleDeny}
+                        roomId={roomId}
                       />
                     </div>
                   )}
@@ -349,17 +355,7 @@ const HostSession = () => {
               onParticipantsUpdate={setLiveKitParticipants}
             />
 
-            {/* End Session Button placed prominently below the video feed for Hosts */}
-            {sessionInfo?.isHost && (
-              <div className="mt-6 flex justify-center pb-8">
-                <button
-                  onClick={handleEndSession}
-                  className="px-8 py-3 text-base sm:text-lg font-bold text-red-500 bg-red-950/40 rounded-xl hover:bg-red-900/60 hover:text-white focus:outline-none focus:ring-4 focus:ring-red-900/50 transition-all shadow-[0_4px_20px_rgba(220,38,38,0.15)] border border-red-500/50 transform hover:-translate-y-1 w-full sm:w-auto"
-                >
-                  {APP_CONFIG.SESSION_CONTENT.HEADER.END_SESSION_BUTTON}
-                </button>
-              </div>
-            )}
+
           </div>
 
           <div className="lg:col-span-1 space-y-4">
@@ -374,12 +370,12 @@ const HostSession = () => {
             )}
 
             <ParticipantsList
-              participants={sessionInfo.participants}
+              participants={sessionInfo?.participants}
               liveKitParticipants={liveKitParticipants}
-              hostId={sessionInfo.host}
-              hostName={sessionInfo.hostName}
-              currentUserId={user?.id}
-              isHost={sessionInfo.isHost}
+              hostId={sessionInfo?.host}
+              hostName={sessionInfo?.hostName}
+              currentUserId={user?.id || user?._id}
+              isHost={sessionInfo?.isHost}
               roomId={roomId}
               onMute={handleMute}
               onRemove={handleRemove}

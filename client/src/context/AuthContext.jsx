@@ -23,8 +23,10 @@ export const AuthProvider = ({ children }) => {
         const response = await api.get(API_ENDPOINTS.AUTH.ME);
         setUser(response.data?.data?.user);
       } catch (error) {
-        localStorage.removeItem("token");
-        setUser(null);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          setUser(null);
+        }
       } finally {
         setLoading(false);
       }

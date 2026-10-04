@@ -37,8 +37,8 @@ router.post(
             .normalizeEmail()
             .withMessage('Please provide a valid email'),
         body('password')
-            .isLength({ min: 6 })
-            .withMessage('Password must be at least 6 characters')
+            .isLength({ min: 6, max: 128 })
+            .withMessage('Password must be between 6 and 128 characters')
     ],
     handleValidationError,
     register
@@ -57,8 +57,8 @@ router.post(
             .normalizeEmail()
             .withMessage('Please provide a valid email'),
         body('password')
-            .isLength({ min: 6 })
-            .withMessage('Password must be at least 6 characters')
+            .isLength({ min: 6, max: 128 })
+            .withMessage('Password must be between 6 and 128 characters')
     ],
     handleValidationError,
     login
@@ -69,6 +69,24 @@ router.post(
 router.get('/me', protect, getMe)
 
 //PUT /api/auth/update
-router.put('/update', protect, updateProfile)
+router.put(
+    '/update',
+    protect,
+    [
+        body('name')
+            .optional()
+            .trim()
+            .isLength({ min: 2, max: 50 })
+            .withMessage('Name must be between 2 and 50 characters'),
+        body('profilePicture')
+            .optional()
+            .isString()
+            .trim()
+            .isLength({ max: 200000 })
+            .withMessage('Profile picture is too large (max 200KB)')
+    ],
+    handleValidationError,
+    updateProfile
+)
 
 export default router;

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
@@ -178,9 +178,9 @@ function App() {
                           404
                         </h1>
                         <p className='text-obsidian-muted mb-4'>Page not found</p>
-                        <a href='/' className='text-obsidian-gold hover:text-obsidian-goldHover'>
+                        <Link to='/' className='text-obsidian-gold hover:text-obsidian-goldHover font-semibold transition-colors'>
                           Go to home
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </Layout>

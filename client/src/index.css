@@ -148,8 +148,30 @@ body {
 }
 
 /* ============================================
-   Fullscreen Mode Styles
+   Fullscreen Mode Styles (Native & Fallback)
    ============================================ */
+:fullscreen,
+:-webkit-full-screen,
+:-moz-full-screen,
+:-ms-fullscreen {
+  background: #000 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+:fullscreen .lk-video-conference,
+:-webkit-full-screen .lk-video-conference {
+  height: 100vh !important;
+  width: 100vw !important;
+}
+
+::backdrop {
+  background-color: #000 !important;
+}
+
 .session-fullscreen {
   position: fixed !important;
   top: 0 !important;
@@ -170,6 +192,17 @@ body {
 
 .session-fullscreen .lk-video-conference {
   height: 100vh !important;
+}
+
+/* Discord-style auto-hiding fullscreen overlay controls */
+.fullscreen-controls-overlay {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s;
+}
+
+.fullscreen-controls-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-8px);
 }
 
 /* Fullscreen exit hint — positioned at TOP-LEFT to avoid overlapping Messages/chat on the right */
@@ -216,6 +249,28 @@ body {
    LiveKit Component Responsive Overrides  
    ============================================ */
 
+/* Hardware accelerated video decoding & crisp pixel scaling for text/screen */
+[data-lk-theme="default"] video {
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+  transform: translateZ(0) !important;
+  -webkit-transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+}
+
+/* Screen shares: always preserve aspect ratio without cropping (crisper than Discord) */
+[data-lk-theme="default"] video[data-lk-source="screen_share"],
+[data-lk-theme="default"] .lk-focus-layout video {
+  object-fit: contain !important;
+  background-color: #000 !important;
+}
+
+/* Camera tiles: smooth fill with subtle rounded edges */
+[data-lk-theme="default"] video[data-lk-source="camera"] {
+  object-fit: cover !important;
+}
+
 /* Make LiveKit video conference fill container properly */
 [data-lk-theme="default"] .lk-video-conference {
   height: 100% !important;
@@ -235,6 +290,7 @@ body {
   background: #111 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
   transition: box-shadow 0.2s ease-in-out !important;
+  will-change: transform, box-shadow;
 }
 
 /* Premium Active Speaker Ring (Obsidian Gold) */

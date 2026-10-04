@@ -64,6 +64,21 @@ const sessionSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Compound indexes for sub-millisecond query performance on MongoDB Atlas M0 Free Tier (prevents slow COLLSCANs)
+sessionSchema.index({ host: 1, createdAt: -1 });
+sessionSchema.index({ 'participants.userId': 1, createdAt: -1 });
+sessionSchema.index({ status: 1, createdAt: -1 });
+sessionSchema.index({ roomId: 1, status: 1 });
+
+// Auto-prune ended sessions after 60 days to prevent 512MB M0 storage exhaustion
+sessionSchema.index(
+    { endedAt: 1 },
+    {
+        expireAfterSeconds: 60 * 24 * 60 * 60,
+        partialFilterExpression: { endedAt: { $type: 'date' } }
+    }
+);
+
 
 sessionSchema.statics.generateRoomId = function () {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

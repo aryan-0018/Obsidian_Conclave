@@ -31,7 +31,9 @@ export const listSession = async (req, res, next) => {
           $or: [{ host: userId }, { "participants.userId": userId }],
         },
       ],
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .lean();
 
     const result = session.map((s) => ({
       id: s._id,
@@ -39,10 +41,10 @@ export const listSession = async (req, res, next) => {
       hostName: s.hostName,
       meetingType: s.meetingType || 'public',
       status: s.status,
-      participantCount: s.participants.length || 0,
+      participantCount: s.participants?.length || 0,
       startedAt: s.startedAt,
       endedAt: s.endedAt,
-      isHost: s.host.toString() === userId.toString(),
+      isHost: s.host?.toString() === userId.toString(),
     }));
 
     res.json({
@@ -271,7 +273,7 @@ export const getSession = async (req, res, next) => {
     const { roomId } = req.params;
     const userId = req.user.userId;
 
-    const session = await Session.findOne({ roomId });
+    const session = await Session.findOne({ roomId }).lean();
     if (!session) {
       return res.status(404).json({
         success: false,
@@ -279,12 +281,12 @@ export const getSession = async (req, res, next) => {
       });
     }
 
-    const isHost = session.host.toString() === userId.toString();
-    const isParticipant = session.participants.some(
-      (p) => p.userId.toString() === userId.toString(),
+    const isHost = session.host?.toString() === userId.toString();
+    const isParticipant = (session.participants || []).some(
+      (p) => p.userId?.toString() === userId.toString(),
     );
-    const isPending = session.pendingParticipants?.some(
-      (p) => p.userId.toString() === userId.toString(),
+    const isPending = (session.pendingParticipants || []).some(
+      (p) => p.userId?.toString() === userId.toString(),
     );
 
     let joinStatus = 'none';
@@ -440,7 +442,7 @@ export const admitParticipant = async (req, res, next) => {
 
     // Find the pending participant
     const pendingIndex = session.pendingParticipants.findIndex(
-      (p) => p.userId.toString() === pendingUserId.toString()
+      (p) => p.userId?.toString() === pendingUserId?.toString()
     );
 
     if (pendingIndex === -1) {
@@ -486,7 +488,7 @@ export const denyParticipant = async (req, res, next) => {
     }
 
     const pendingIndex = session.pendingParticipants.findIndex(
-      (p) => p.userId.toString() === pendingUserId.toString()
+      (p) => p.userId?.toString() === pendingUserId?.toString()
     );
 
     if (pendingIndex === -1) {
@@ -535,7 +537,7 @@ export const removeParticipant = async (req, res, next) => {
     }
 
     const participantIndex = session.participants.findIndex(
-      (p) => p.userId.toString() === targetUserId.toString()
+      (p) => p.userId?.toString() === targetUserId?.toString()
     );
 
     if (participantIndex === -1) {

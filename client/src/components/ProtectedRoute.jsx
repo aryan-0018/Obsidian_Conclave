@@ -8,10 +8,10 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-obsidian-bg">
         <div className="text-center">
-          <FaSpinner className="animate-spin h-12 w-12 text-blue-600 mx-auto" />
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <FaSpinner className="animate-spin h-12 w-12 text-obsidian-gold mx-auto" />
+          <p className="mt-4 text-obsidian-muted">Loading...</p>
         </div>
       </div>
     );

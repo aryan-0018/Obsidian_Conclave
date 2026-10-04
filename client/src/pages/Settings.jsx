@@ -21,14 +21,41 @@ const Settings = () => {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                setMessage({ text: 'Image cannot exceed 5MB.', type: 'error' });
+            if (file.size > 8 * 1024 * 1024) {
+                setMessage({ text: 'Image cannot exceed 8MB.', type: 'error' });
                 return;
             }
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setProfilePicture(reader.result);
-                setPreviewImage(reader.result);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const maxSize = 256;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height = Math.round((height * maxSize) / width);
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width = Math.round((width * maxSize) / height);
+                            height = maxSize;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                    setProfilePicture(compressedBase64);
+                    setPreviewImage(compressedBase64);
+                };
+                img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }

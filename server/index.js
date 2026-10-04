@@ -3,6 +3,7 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import connectDb from './config/database.js';
 import errorHandler from './middleware/errorHandler.js';
 import authRoute from './routes/authRoute.js';
@@ -11,6 +12,17 @@ import { apiLimiter } from './middleware/rateLimiter.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Trust reverse proxy for accurate client IP in rate limiting (e.g. Vercel, Render, AWS, Nginx)
+app.set('trust proxy', 1);
+
+// Enterprise HTTP Security Headers
+app.use(
+    helmet({
+        crossOriginEmbedderPolicy: false, // Allows WebRTC low-latency audio/video workers
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+    })
+);
 
 // Dynamic CORS configuration
 const allowedOrigins = process.env.CLIENT_URL
@@ -37,8 +49,9 @@ const corsOption = {
 connectDb();
 
 app.use(cors(corsOption));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Strict body size limits to prevent memory exhaustion / DoS attacks
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // Apply general API rate limiting to all /api routes
 app.use('/api', apiLimiter);
@@ -61,6 +74,15 @@ app.use('/api/session', sessionRoute);
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+});
+
+// Graceful process error handling to prevent sudden crashes
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[Unhandled Rejection at Promise]:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('[Uncaught Exception]:', error);
 });

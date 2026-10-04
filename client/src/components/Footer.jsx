@@ -52,14 +52,23 @@ const Footer = () => {
             <ul className="space-y-2">
               {APP_CONFIG.FOOTER_LINKS.SUPPORT_LINKS.map((link, index) => (
                 <li key={index}>
-                  <a
-                    href={link.url}
-                    className="hover:text-obsidian-gold transition-colors"
-                    target={link.isExternal ? "_blank" : undefined}
-                    rel={link.isExternal ? "noopener noreferrer" : undefined}
-                  >
-                    {link.label}
-                  </a>
+                  {link.isExternal ? (
+                    <a
+                      href={link.url}
+                      className="hover:text-obsidian-gold transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link
+                      to={link.url}
+                      className="hover:text-obsidian-gold transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
