@@ -348,6 +348,14 @@ export const endSession = async (req, res, next) => {
     session.pendingParticipants = [];
     await session.save();
 
+    // Immediately terminate the LiveKit room so all participants are disconnected globally
+    try {
+      const roomService = getLivekitRoomService();
+      await roomService.deleteRoom(session.roomId);
+    } catch (lkErr) {
+      console.error("LiveKit deleteRoom error (non-fatal):", lkErr.message);
+    }
+
     res.json({
       success: true,
       data: {

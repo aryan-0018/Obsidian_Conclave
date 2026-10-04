@@ -13,6 +13,7 @@ import {
 } from '../controllers/sessionControllers.js';
 import { generateLivekitToken, muteParticipant, stopScreenShare } from '../controllers/livekitController.js';
 import { protect } from '../middleware/auth.js';
+import { createSessionLimiter } from '../middleware/rateLimiter.js';
 
 
 const router = express.Router();
@@ -40,7 +41,7 @@ router.get('/list', listSession)
 
 
 //POST /api/session/create
-router.post('/create', createSession)
+router.post('/create', createSessionLimiter, createSession)
 
 
 //POST /api/session/join

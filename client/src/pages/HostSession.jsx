@@ -96,20 +96,21 @@ const HostSession = () => {
           // Check for new pending participants to notify
           if (res.session.meetingType === 'private' && res.session.isHost && res.session.pendingParticipants?.length > 0) {
             res.session.pendingParticipants.forEach(user => {
-              if (!notifiedPendingIds.current.has(user._id)) {
-                notifiedPendingIds.current.add(user._id);
+              const pendingId = user.userId || user._id;
+              if (!notifiedPendingIds.current.has(pendingId)) {
+                notifiedPendingIds.current.add(pendingId);
 
                 // Show custom toast with Admit/Deny buttons
                 toast((t) => (
                   <div className="flex flex-col gap-3 min-w-[250px]">
                     <div>
-                      <span className="font-semibold text-white">{user.name}</span>
+                      <span className="font-semibold text-white">{user.userName || user.name}</span>
                       <p className="text-sm text-obsidian-muted mt-1">wants to join</p>
                     </div>
                     <div className="flex gap-2 w-full">
                       <button
                         onClick={() => {
-                          handleAdmit(roomId, user._id);
+                          handleAdmit(roomId, pendingId);
                           toast.dismiss(t.id);
                         }}
                         className="flex-1 bg-green-600/20 text-green-500 border border-green-500/30 hover:bg-green-600/40 px-3 py-1.5 rounded text-sm font-semibold transition-colors"
@@ -118,7 +119,7 @@ const HostSession = () => {
                       </button>
                       <button
                         onClick={() => {
-                          handleDeny(roomId, user._id);
+                          handleDeny(roomId, pendingId);
                           toast.dismiss(t.id);
                         }}
                         className="flex-1 bg-red-600/20 text-red-500 border border-red-500/30 hover:bg-red-600/40 px-3 py-1.5 rounded text-sm font-semibold transition-colors"

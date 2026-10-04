@@ -1,7 +1,7 @@
 {
-  "name": "live-class-server",
+  "name": "obsidian-conclave-server",
   "version": "1.0.0",
-  "description": "Backend live class mern app",
+  "description": "Backend API server for Obsidian Conclave encrypted congregation platform",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -17,6 +17,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
     "express-validator": "^7.3.1",
     "jsonwebtoken": "^9.0.3",
     "livekit-server-sdk": "^2.15.0",

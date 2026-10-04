@@ -105,7 +105,7 @@ const AuthForm = ({
                     value={formData.name || ""}
                     onChange={onChange}
                     className="block w-full pl-10 pr-3 py-3 bg-obsidian-secondary border border-obsidian-border rounded-lg text-obsidian-text placeholder-obsidian-muted focus:ring-2 focus:ring-obsidian-gold focus:border-obsidian-gold transition-colors outline-none"
-                    placeholder="John Doe"
+                    placeholder="Full name"
                   />
                 </div>
               </div>
@@ -131,7 +131,7 @@ const AuthForm = ({
                   value={formData.email || ""}
                   onChange={onChange}
                   className="block w-full pl-10 pr-3 py-3 bg-obsidian-secondary border border-obsidian-border rounded-lg text-obsidian-text placeholder-obsidian-muted focus:ring-2 focus:ring-obsidian-gold focus:border-obsidian-gold transition-colors outline-none"
-                  placeholder="you@example.com"
+                  placeholder="Email address"
                 />
               </div>
             </div>

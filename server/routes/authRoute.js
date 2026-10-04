@@ -2,6 +2,7 @@ import express from 'express';
 import { body, validationResult } from 'express-validator'
 import { getMe, login, register, updateProfile } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
 
 
 const router = express.Router();
@@ -25,6 +26,7 @@ const handleValidationError = (req, res, next) => {
 
 router.post(
     '/register',
+    authLimiter,
     [
         body('name')
             .trim()
@@ -48,6 +50,7 @@ router.post(
 
 router.post(
     '/login',
+    authLimiter,
     [
         body('email')
             .isEmail()
